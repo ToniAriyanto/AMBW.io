@@ -1,20 +1,67 @@
-// On install - caching the application shell
-self.addEventListener('install', function(event) {
+self.addEventListener("install", function (event) {
   event.waitUntil(
-    caches.open('sw-cache').then(function(cache) {
-      // cache any static files that make up the application shell
-      return cache.add('index.html');
+    caches.open("first-app").then(function (cache) {
+      cache.addAll([
+        "/",
+        "index.html",
+        "blog.html",
+        "about.html",
+        "contact.html",
+        "portfolio-example01.html",
+        "styles.css",
+        "app.js"
+      ]);
     })
+  );
+  return self.clients.claim();
+});
+
+//cache then network 
+self.addEventListener('fetch', function(event) {
+  event.respondWith(
+    caches.open('first-app')
+      .then(function(cache) {
+        return fetch(event.request)
+          .then(function(res) {
+            cache.put(event.request, res.clone());
+            return res;
+          });
+      })
   );
 });
 
-// On network request
+//cache offline
 self.addEventListener('fetch', function(event) {
   event.respondWith(
-    // Try the cache
-    caches.match(event.request).then(function(response) {
-      //If response found return it, else fetch again
-      return response || fetch(event.request);
-    })
+    caches.match(event.request)
+      .then(function(response) {
+        if (response) {
+          return response;
+        } else {
+          return fetch(event.request)
+            .then(function(res) {
+              return caches.open('first-app')
+                .then(function(cache) {
+                  return fetch(event.request)
+                  .then(function(res){
+
+                  cache.put(event.request.url, res.clone());
+                  return res;
+                })
+            })
+          })
+            .catch(function(err) {
+              return caches.open('first-app')
+                .then(function(cache) {
+                  return fetch(event.request)
+                  .then(function(res){
+
+                  cache.put(event.request.url, res.clone());
+                  return res;
+                })
+                });
+            });
+        }
+      })
   );
 });
