@@ -114,6 +114,17 @@
         </main>
     </div>
     <script src="https://code.getmdl.io/1.0.6/material.min.js"></script>
+  <script> 
+  navigator.serviceWorker.register('sw.js');
+
+      var deferredPrompt;
+      window.addEventListener('beforeinstallprompt', function(event) {
+        console.log('beforeinstallprompt fired');
+        event.preventDefault();
+        deferredPrompt = event;
+        return false;
+        });
+  </script>
 </body>
 
 </html>
